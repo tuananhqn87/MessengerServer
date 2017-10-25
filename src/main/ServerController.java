@@ -14,10 +14,18 @@ import javax.swing.JTextField;
 import database.DBQuery;
 import ui.ServerGUI;
 
-public class Controller {
+public class ServerController {
 	private final static String XTER_PREFIX = "xTer: ";
 	private final static String HANNAH_PREFIX = "Hannah: ";
 	private final static String PORT_REGEX = "[0-9]+";
+	private final static String END_COMMAND = "end";
+	private final static String DISCONNECT = "Server ended the connection!";
+	private final static String WAIT_FOR_CONNECTING = "Waiting for someone to connect... ";
+	private final static String CONNECTED_TO = "Now connected to ";
+	private final static String CONNECTED = "You are now connected to the server!";
+	
+	private static String remoteUser;
+	private static String localUser;
 	
 	private static DBQuery dbQuery;
 	private static ServerSocket serverSocket;
@@ -36,7 +44,7 @@ public class Controller {
 				chattingInstance();
 			} catch (EOFException eof){
 				eof.printStackTrace();
-				ServerGUI.showMessage("Server ended the connection!");
+				ServerGUI.showMessage(DISCONNECT);
 			}
 		} 
 	}
@@ -45,9 +53,9 @@ public class Controller {
 	 * Wait for connection 
 	 */
     static void waitForConnection() throws IOException {
-	    	ServerGUI.showMessage("Waiting for someone to connect... ");
+	    	ServerGUI.showMessage(WAIT_FOR_CONNECTING);
 	    	socket = serverSocket.accept();
-	    	ServerGUI.showMessage("Now connected to " + socket.getInetAddress().getHostName());
+	    	ServerGUI.showMessage(CONNECTED_TO + socket.getInetAddress().getHostName());
     }
 
     /**
@@ -68,27 +76,32 @@ public class Controller {
      * Maintain chatting's instance
      */
     static void chattingInstance() throws IOException {
-	    	String message = "You are now connected! ";
-	    	sendMessage(message);
-	    	do {
+    		ServerGUI.showMessage(CONNECTED);
+	    	sendMessage(CONNECTED);
+	    receiveMessage();
+    }
+    
+    static void receiveMessage() throws IOException {
+    		String message = null;
+	    	 do {
 	    		try {
 	    			message = (String) inputStream.readObject();
 	    			ServerGUI.showMessage(message);
-	    			dbQuery.insert("Xter", "Hannah", message);
-	    		} catch (EOFException | ClassNotFoundException e) {
+	    			dbQuery.insert(remoteUser, localUser, message);
+	    		} catch (ClassNotFoundException e) {
 	    			e.printStackTrace();
 	    		}
-	    	} while(!message.equalsIgnoreCase(XTER_PREFIX + "End"));
+	    	} while(!message.equalsIgnoreCase(END_COMMAND));
     }
     
     static void sendMessage(String message) throws IOException {
     		if (isStreamsSetup) {
 	    		// Write the message object to output stream
-	    		outputStream.writeObject(HANNAH_PREFIX + message);
+	    		outputStream.writeObject(message);
 	    		// Flush output stream
 	    		outputStream.flush();
 	    		// Insert message to database
-	    		dbQuery.insert("Hannah", "Xter", message);
+	    		dbQuery.insert(localUser, remoteUser, message);
 	    		// Show message
 	    		ServerGUI.showMessage("Me: " + message);
     		} else {

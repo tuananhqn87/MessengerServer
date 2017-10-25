@@ -17,7 +17,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import main.Controller;
+import main.ServerController;
 
 public class ServerGUI extends JFrame {
 
@@ -150,7 +150,7 @@ public class ServerGUI extends JFrame {
 	 */
 	public void addBehaviors() {
 		// Initialize event container
-		Controller.EventContainer eventContainer = new Controller.EventContainer();
+		ServerController.EventContainer eventContainer = new ServerController.EventContainer();
 		
 		// Add  action listeners to components
 		txtMessage.addActionListener(eventContainer.pressEnterToSend(txtMessage));
